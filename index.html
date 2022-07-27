@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/qgis2web.css"><link rel="stylesheet" href="css/fontawesome-all.min.css">
+         <style>
+            body { margin:0; padding:0; }
+            #map { position:absolute; top:0; bottom:0; width:100%; }
+        </style>
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet.wms.js"></script>
+        <script src="js/leaflet-tilelayer-wmts.js"></script>
+        <script src="js/proj4.js"></script>
+        <script src="js/proj4leaflet.js"></script>
+        <script src="data/RibbleValleyDistrictBoundaryOutline_2.js"></script>
+        <script src="data/LCCVerges_3.js"></script>
+        <script src="data/HeavyLeafFallRoutes_4.js"></script>
+        <script src="data/ExCouncilLocationsMaintenanceLand_5.js"></script>
+        <script>
+
+        var apiKey = 'NAI9sZS6RxIdV4MpIdHfHR9lbQ9OPOwa';
+
+        var serviceUrl = 'https://api.os.uk/maps/raster/v1/zxy';
+
+    // Setup the EPSG:27700 (British National Grid) projection.
+        var crs = new L.Proj.CRS('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs', {
+            resolutions: [ 896.0, 448.0, 224.0, 112.0, 56.0, 28.0, 14.0, 7.0, 3.5, 1.75, 0.875, 0.4375, 0.21875, 0.109375 ],
+            origin: [ -238375.0, 1376256.0 ]
+        });
+
+    // Transform coordinates.
+        var transformCoords = function(arr) {
+            return proj4('EPSG:27700', 'EPSG:4326', arr).reverse();
+        };
+
+        var map = L.map('map', {
+            crs: crs,
+            center: transformCoords([ 374288,442016 ]),
+            zoom: 4,
+            minZoom: 3,
+            maxBounds: [
+                transformCoords([ 352289.0, 428245.0]),
+                transformCoords([ 392924.0, 461772.0 ])
+            ],
+            continuousWorld: false,
+            worldCopyJump: false, 
+           // zoomControl:true, maxZoom:28, minZoom:1
+        });
+        
+
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+
+            // BASE MAPS
+        var osroad = L.tileLayer(serviceUrl + '/Road_27700/{z}/{x}/{y}.png?key='+ apiKey, {   
+                maxZoom: 22,
+                attribution: '<a>Contains OS data © Crown copyright and database right<a/>',
+            });
+
+        var osout = L.tileLayer(serviceUrl + '/Outdoor_27700/{z}/{x}/{y}.png?key='+ apiKey, {   
+                maxZoom: 22,
+            }).addTo(map);
+
+        var osleisure = L.tileLayer(serviceUrl + '/Leisure_27700/{z}/{x}/{y}.png?key='+ apiKey, {   
+                maxZoom: 9,
+            });
+
+        map.createPane('pane_Road_27700_0');
+        map.getPane('pane_Road_27700_0').style.zIndex = 400;
+        var layer_Road_27700_0 = L.tileLayer.wmts('https://api.os.uk/maps/raster/v1/wmts', {
+            pane: 'pane_Road_27700_0',
+            layer: 'Road_27700',
+            tilematrixSet: 'EPSG:27700',
+            format: 'image/png',
+            style: 'default',
+            uppercase: true,
+            transparent: true,
+            continuousWorld : true,
+            opacity: 1.0,
+            attribution: '',
+        });
+        map.addLayer(layer_Road_27700_0);
+        map.createPane('pane_AerialPhotography125cmLatest_1');
+        map.getPane('pane_AerialPhotography125cmLatest_1').style.zIndex = 401;
+        var layer_AerialPhotography125cmLatest_1 = L.WMS.layer("https://www.geostore.com/APGBOGC/OGCInterface?INTERFACE=APGBWMS&GUID=1535bb15-ca5e-4899-839a-ee7943cdb12e", "AP-12CM5-GB-LATEST", {
+            pane: 'pane_AerialPhotography125cmLatest_1',
+            format: 'image/png',
+            uppercase: true,
+            transparent: true,
+            continuousWorld : true,
+            tiled: true,
+            info_format: 'text/html',
+            opacity: 1,
+            identify: false,
+            attribution: '',
+        });
+
+        function pop_RibbleValleyDistrictBoundaryOutline_2(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(feature.properties['id'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(feature.properties['fid'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['ogc_fid'] !== null ? autolinker.link(feature.properties['ogc_fid'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['featurecod'] !== null ? autolinker.link(feature.properties['featurecod'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['version'] !== null ? autolinker.link(feature.properties['version'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['versiondat'] !== null ? autolinker.link(feature.properties['versiondat'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['theme'] !== null ? autolinker.link(feature.properties['theme'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['accuracyof'] !== null ? autolinker.link(feature.properties['accuracyof'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['changedate'] !== null ? autolinker.link(feature.properties['changedate'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['reasonforc'] !== null ? autolinker.link(feature.properties['reasonforc'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['descriptiv'] !== null ? autolinker.link(feature.properties['descriptiv'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['descript_1'] !== null ? autolinker.link(feature.properties['descript_1'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['physicalle'] !== null ? autolinker.link(feature.properties['physicalle'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['physicalpr'] !== null ? autolinker.link(feature.properties['physicalpr'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['style_desc'] !== null ? autolinker.link(feature.properties['style_desc'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['style_code'] !== null ? autolinker.link(feature.properties['style_code'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_RibbleValleyDistrictBoundaryOutline_2_0() {
+            return {
+                pane: 'pane_RibbleValleyDistrictBoundaryOutline_2',
+                opacity: 1,
+                color: 'rgba(0,0,0,0.5)',
+                dashArray: '10,5',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 3.0,
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+        map.createPane('pane_RibbleValleyDistrictBoundaryOutline_2');
+        map.getPane('pane_RibbleValleyDistrictBoundaryOutline_2').style.zIndex = 402;
+        map.getPane('pane_RibbleValleyDistrictBoundaryOutline_2').style['mix-blend-mode'] = 'normal';
+        var layer_RibbleValleyDistrictBoundaryOutline_2 = new L.geoJson(json_RibbleValleyDistrictBoundaryOutline_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_RibbleValleyDistrictBoundaryOutline_2',
+            layerName: 'layer_RibbleValleyDistrictBoundaryOutline_2',
+            pane: 'pane_RibbleValleyDistrictBoundaryOutline_2',
+            onEachFeature: pop_RibbleValleyDistrictBoundaryOutline_2,
+            style: style_RibbleValleyDistrictBoundaryOutline_2_0,
+        });
+        bounds_group.addLayer(layer_RibbleValleyDistrictBoundaryOutline_2);
+        map.addLayer(layer_RibbleValleyDistrictBoundaryOutline_2);
+        function pop_LCCVerges_3(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">Maintained by RVBC</th>\
+                        <td>' + (feature.properties['Maintained by RVBC'] !== null ? autolinker.link(feature.properties['Maintained by RVBC'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Area</th>\
+                        <td>' + (feature.properties['Area'] !== null ? autolinker.link(feature.properties['Area'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Notes</th>\
+                        <td>' + (feature.properties['Notes'] !== null ? autolinker.link(feature.properties['Notes'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_LCCVerges_3_0(feature) {
+            switch(String(feature.properties['Maintained by RVBC'])) {
+                case 'True':
+                    return {
+                pane: 'pane_LCCVerges_3',
+                opacity: 1,
+                color: 'rgba(88,208,32,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(88,208,32,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'False':
+                    return {
+                pane: 'pane_LCCVerges_3',
+                opacity: 1,
+                color: 'rgba(236,32,36,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(236,32,36,0.5019607843137255)',
+                interactive: true,
+            }
+                    break;
+                case 'Other':
+                    return {
+                pane: 'pane_LCCVerges_3',
+                opacity: 1,
+                color: 'rgba(236,255,36,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(236,255,36,0.5019607843137255)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_LCCVerges_3');
+        map.getPane('pane_LCCVerges_3').style.zIndex = 403;
+        map.getPane('pane_LCCVerges_3').style['mix-blend-mode'] = 'normal';
+        var layer_LCCVerges_3 = new L.geoJson(json_LCCVerges_3, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_LCCVerges_3',
+            layerName: 'layer_LCCVerges_3',
+            pane: 'pane_LCCVerges_3',
+            onEachFeature: pop_LCCVerges_3,
+            style: style_LCCVerges_3_0,
+        });
+        bounds_group.addLayer(layer_LCCVerges_3);
+        map.addLayer(layer_LCCVerges_3);
+        function pop_HeavyLeafFallRoutes_4(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">Road Name</th>\
+                        <td>' + (feature.properties['roadname'] !== null ? autolinker.link(feature.properties['roadname'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Road Number</th>\
+                        <td>' + (feature.properties['roadno'] !== null ? autolinker.link(feature.properties['roadno'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Road Class</th>\
+                        <td>' + (feature.properties['class_type'] !== null ? autolinker.link(feature.properties['class_type'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">District</th>\
+                        <td>' + (feature.properties['district'] !== null ? autolinker.link(feature.properties['district'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Route (Gritting)</th>\
+                        <td>' + (feature.properties['route'] !== null ? autolinker.link(feature.properties['route'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Mode (Gritting)</th>\
+                        <td>' + (feature.properties['mode'] !== null ? autolinker.link(feature.properties['mode'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Settlement</th>\
+                        <td>' + (feature.properties['settlement'] !== null ? autolinker.link(feature.properties['settlement'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Locality</th>\
+                        <td>' + (feature.properties['locality'] !== null ? autolinker.link(feature.properties['locality'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Gritting Route Priority</th>\
+                        <td>' + (feature.properties['symbol'] !== null ? autolinker.link(feature.properties['symbol'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_HeavyLeafFallRoutes_4_0(feature) {
+            switch(String(feature.properties['symbol'])) {
+                case 'PRIORITY':
+                    return {
+                pane: 'pane_HeavyLeafFallRoutes_4',
+                opacity: 1,
+                color: 'rgba(194,25,232,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 5.0,
+                fillOpacity: 0,
+                interactive: true,
+            }
+                    break;
+                case 'SECONDARY':
+                    return {
+                pane: 'pane_HeavyLeafFallRoutes_4',
+                opacity: 1,
+                color: 'rgba(255,204,1,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 4.0,
+                fillOpacity: 0,
+                interactive: true,
+            }
+                    break;
+                case 'OTHER':
+                    return {
+                pane: 'pane_HeavyLeafFallRoutes_4',
+                opacity: 1,
+                color: 'rgba(33,214,39,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 1.0,
+                fillOpacity: 0,
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_HeavyLeafFallRoutes_4');
+        map.getPane('pane_HeavyLeafFallRoutes_4').style.zIndex = 404;
+        map.getPane('pane_HeavyLeafFallRoutes_4').style['mix-blend-mode'] = 'normal';
+        var layer_HeavyLeafFallRoutes_4 = new L.geoJson(json_HeavyLeafFallRoutes_4, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_HeavyLeafFallRoutes_4',
+            layerName: 'layer_HeavyLeafFallRoutes_4',
+            pane: 'pane_HeavyLeafFallRoutes_4',
+            onEachFeature: pop_HeavyLeafFallRoutes_4,
+            style: style_HeavyLeafFallRoutes_4_0,
+        });
+        bounds_group.addLayer(layer_HeavyLeafFallRoutes_4);
+        map.addLayer(layer_HeavyLeafFallRoutes_4);
+        function pop_ExCouncilLocationsMaintenanceLand_5(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">Type</th>\
+                        <td>' + (feature.properties['Type'] !== null ? autolinker.link(feature.properties['Type'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Name</th>\
+                        <td>' + (feature.properties['Name'] !== null ? autolinker.link(feature.properties['Name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Location</th>\
+                        <td>' + (feature.properties['Location'] !== null ? autolinker.link(feature.properties['Location'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_ExCouncilLocationsMaintenanceLand_5_0(feature) {
+            switch(String(feature.properties['Type'])) {
+                case 'Allotments':
+                    return {
+                pane: 'pane_ExCouncilLocationsMaintenanceLand_5',
+                opacity: 1,
+                color: 'rgba(117,183,56,0.9)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(187,232,147,0.6317647058823529)',
+                interactive: true,
+            }
+                    break;
+                case 'Grass':
+                    return {
+                pane: 'pane_ExCouncilLocationsMaintenanceLand_5',
+                opacity: 1,
+                color: 'rgba(114,142,23,0.9)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(157,184,71,0.6317647058823529)',
+                interactive: true,
+            }
+                    break;
+                case 'Woodland':
+                    return {
+                pane: 'pane_ExCouncilLocationsMaintenanceLand_5',
+                opacity: 1,
+                color: 'rgba(13,78,0,0.9)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(64,97,3,0.6317647058823529)',
+                interactive: true,
+            }
+                    break;
+                case 'Play Area':
+                    return {
+                pane: 'pane_ExCouncilLocationsMaintenanceLand_5',
+                opacity: 1,
+                color: 'rgba(238,141,50,0.9)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(238,161,90,0.6317647058823529)',
+                interactive: true,
+            }
+                    break;
+                case 'Playground':
+                    return {
+                pane: 'pane_ExCouncilLocationsMaintenanceLand_5',
+                opacity: 1,
+                color: 'rgba(89,92,90,0.9)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(149,153,156,0.6317647058823529)',
+                interactive: true,
+            }
+                    break;
+                case 'Garages':
+                    return {
+                pane: 'pane_ExCouncilLocationsMaintenanceLand_5',
+                opacity: 1,
+                color: 'rgba(107,84,10,0.9)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(78,59,3,0.6317647058823529)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_ExCouncilLocationsMaintenanceLand_5');
+        map.getPane('pane_ExCouncilLocationsMaintenanceLand_5').style.zIndex = 405;
+        map.getPane('pane_ExCouncilLocationsMaintenanceLand_5').style['mix-blend-mode'] = 'normal';
+        var layer_ExCouncilLocationsMaintenanceLand_5 = new L.geoJson(json_ExCouncilLocationsMaintenanceLand_5, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_ExCouncilLocationsMaintenanceLand_5',
+            layerName: 'layer_ExCouncilLocationsMaintenanceLand_5',
+            pane: 'pane_ExCouncilLocationsMaintenanceLand_5',
+            onEachFeature: pop_ExCouncilLocationsMaintenanceLand_5,
+            style: style_ExCouncilLocationsMaintenanceLand_5_0,
+        });
+        bounds_group.addLayer(layer_ExCouncilLocationsMaintenanceLand_5);
+        map.addLayer(layer_ExCouncilLocationsMaintenanceLand_5);
+        var baseMaps = {
+            'Aerial Photo' : layer_AerialPhotography125cmLatest_1,
+            'OS Leisure' : osleisure,
+            'OS Road' : osroad,
+            'OS Outdoor' : osout
+        };
+        L.control.layers(baseMaps,{'Ex Council Locations - Maintenance Land<br /><table><tr><td style="text-align: center;"><img src="legend/ExCouncilLocationsMaintenanceLand_5_Allotments0.png" /></td><td>Allotments</td></tr><tr><td style="text-align: center;"><img src="legend/ExCouncilLocationsMaintenanceLand_5_Grass1.png" /></td><td>Grass</td></tr><tr><td style="text-align: center;"><img src="legend/ExCouncilLocationsMaintenanceLand_5_Woodland2.png" /></td><td>Woodland</td></tr><tr><td style="text-align: center;"><img src="legend/ExCouncilLocationsMaintenanceLand_5_PlayArea3.png" /></td><td>Play Area</td></tr><tr><td style="text-align: center;"><img src="legend/ExCouncilLocationsMaintenanceLand_5_Playground4.png" /></td><td>Playground</td></tr><tr><td style="text-align: center;"><img src="legend/ExCouncilLocationsMaintenanceLand_5_Garages5.png" /></td><td>Garages</td></tr></table>': layer_ExCouncilLocationsMaintenanceLand_5,'Heavy Leaf Fall Routes<br /><table><tr><td style="text-align: center;"><img src="legend/HeavyLeafFallRoutes_4_PriorityGrittingRoute0.png" /></td><td>Priority Gritting Route</td></tr><tr><td style="text-align: center;"><img src="legend/HeavyLeafFallRoutes_4_SecondaryGrittingRoute1.png" /></td><td>Secondary Gritting Route</td></tr><tr><td style="text-align: center;"><img src="legend/HeavyLeafFallRoutes_4_Other2.png" /></td><td>Other</td></tr></table>': layer_HeavyLeafFallRoutes_4,'LCC Verges<br /><table><tr><td style="text-align: center;"><img src="legend/LCCVerges_3_True0.png" /></td><td>True</td></tr><tr><td style="text-align: center;"><img src="legend/LCCVerges_3_False1.png" /></td><td>False</td></tr><tr><td style="text-align: center;"><img src="legend/LCCVerges_3_Other2.png" /></td><td>Other</td></tr></table>': layer_LCCVerges_3,}).addTo(map);
+        setBounds();
+        </script>
+    </body>
+</html>
